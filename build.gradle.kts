@@ -4,3 +4,27 @@
  * This is a general purpose Gradle build.
  * Learn more about Gradle by exploring our Samples at https://docs.gradle.org/8.12.1/samples
  */
+plugins {
+    `java-library`
+    `jvm-test-suite`
+    alias(libs.plugins.kotlin.jvm)
+}
+
+kotlin {
+    jvmToolchain(17)
+}
+
+dependencies {
+    compileOnlyApi(libs.spring.integration.core)
+
+    testImplementation(kotlin("test"))
+    testImplementation(libs.spring.integration.core)
+}
+
+testing {
+    suites {
+        named<JvmTestSuite>("test") {
+            useJUnitJupiter()
+        }
+    }
+}
