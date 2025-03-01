@@ -80,7 +80,7 @@ implementation("ru.pchurzin:spring-integration-graph:0.1.0")
 <dependency>
     <groupId>ru.pchurzin</groupId>
     <artifactId>spring-integration-plantuml-graph</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 </dependency>
 ----
 
@@ -117,6 +117,39 @@ fun printPlantUml(graphServer: IntegrationGraphServer) {
     graphServer.graph.writePlantUml(System.out) {
         label {
             name.substringAfterLast('.')
+        }
+    }
+}
+----
+
+Change color
+
+[source, kotlin]
+----
+fun printPlantUml(graphServer: IntegrationGraphServer) {
+    graphServer.graph.writePlantUml(System.out) {
+        color {
+            if (name.startsWith("org.springframework")) {
+                "gray"
+            } else {
+                null
+            }
+        }
+    }
+}
+----
+
+Custom stereotype
+[source, kotlin]
+----
+fun printPlantUml(graphServer: IntegrationGraphServer) {
+    graphServer.graph.writePlantUml(System.out) {
+        showStereotypes()
+        stereotype {
+            when(integrationPatternType) {
+                pollable_channel -> "<\$polling_consumer>"
+                else -> null
+            }
         }
     }
 }
