@@ -6,16 +6,19 @@ import org.springframework.integration.graph.Graph
 import org.springframework.integration.graph.IntegrationNode
 import org.springframework.integration.graph.LinkNode
 
-fun Graph.writePlantUml(appendable: Appendable) = generatePlantUml(this, appendable)
+fun Graph.writePlantUml(appendable: Appendable, configure: ConfigScope.() -> Unit = {}) {
+    generatePlantUml(this, appendable, configure)
+}
 
-fun generatePlantUml(graph: Graph, appendable: Appendable) {
+fun generatePlantUml(graph: Graph, appendable: Appendable, configure: ConfigScope.() -> Unit = {}) {
+    val config = ConfigBuilder().apply(configure).build()
     appendable.appendLine("@startuml")
     appendable.appendLine("!includeurl https://raw.githubusercontent.com/plantuml-stdlib/EIP-PlantUML/main/dist/EIP-PlantUML.puml")
     appendable.appendLine("HIDE_STEREOTYPES()")
     appendable.appendLine()
 
     graph.nodes.forEach { node ->
-        appendable.appendLine(node.plantUmlDeclaration())
+        appendable.appendLine(node.plantUmlDeclaration(config))
     }
 
     appendable.appendLine()
@@ -26,6 +29,28 @@ fun generatePlantUml(graph: Graph, appendable: Appendable) {
 
     appendable.appendLine("@enduml")
 }
+
+@DslMarker
+annotation class ConfigDsl
+
+@ConfigDsl
+interface ConfigScope {
+    fun label(labelGenerator: IntegrationNode.() -> String)
+}
+
+private class ConfigBuilder : ConfigScope {
+    private var labelGenerator: (IntegrationNode) -> String = { it.name }
+
+    override fun label(labelGenerator: (IntegrationNode) -> String) {
+        this.labelGenerator = labelGenerator
+    }
+
+    fun build(): Config = Config(labelGenerator)
+}
+
+private data class Config(
+    val labelGenerator: (IntegrationNode) -> String,
+)
 
 private val IntegrationPatternType.plantUmlName
     get() = when (this) {
@@ -60,8 +85,14 @@ private val IntegrationPatternType.plantUmlName
         recipient_list_router -> "RecipientList"
     }
 
-private fun IntegrationNode.plantUmlDeclaration() =
-    "${integrationPatternType!!.plantUmlName}(node_$nodeId, \"$name\")"
+private fun IntegrationNode.plantUmlDeclaration(config: Config): String = buildString {
+    append(integrationPatternType!!.plantUmlName)
+    append("(node_")
+    append(nodeId)
+    append(", \"")
+    append(config.labelGenerator(this@plantUmlDeclaration))
+    append("\")")
+}
 
 private fun LinkNode.plantUmlDeclaration() =
     "Send(node_$from, node_$to)"
