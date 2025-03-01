@@ -7,10 +7,11 @@ import org.springframework.integration.graph.IntegrationNode
 import org.springframework.integration.graph.LinkNode
 
 fun Graph.writePlantUml(appendable: Appendable, configure: ConfigScope.() -> Unit = {}) {
-    generatePlantUml(this, appendable, configure)
+    writePlantUml(this, appendable, configure)
 }
 
-fun generatePlantUml(graph: Graph, appendable: Appendable, configure: ConfigScope.() -> Unit = {}) {
+@JvmName("writePlantUmlStatic")
+private fun writePlantUml(graph: Graph, appendable: Appendable, configure: ConfigScope.() -> Unit = {}) {
     val config = ConfigBuilder().apply(configure).build()
     appendable.appendLine("@startuml")
     appendable.appendLine("!includeurl https://raw.githubusercontent.com/plantuml-stdlib/EIP-PlantUML/main/dist/EIP-PlantUML.puml")
