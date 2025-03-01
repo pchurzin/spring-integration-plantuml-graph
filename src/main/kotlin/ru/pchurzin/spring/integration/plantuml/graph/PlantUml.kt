@@ -6,12 +6,12 @@ import org.springframework.integration.graph.Graph
 import org.springframework.integration.graph.IntegrationNode
 import org.springframework.integration.graph.LinkNode
 
-fun Graph.writePlantUml(appendable: Appendable, configure: ConfigScope.() -> Unit = {}) {
+fun Graph.writePlantUml(appendable: Appendable, configure: ConfigScope.() -> Unit = defaultConfig) {
     writePlantUml(this, appendable, configure)
 }
 
 @JvmName("writePlantUmlStatic")
-private fun writePlantUml(graph: Graph, appendable: Appendable, configure: ConfigScope.() -> Unit = {}) {
+private fun writePlantUml(graph: Graph, appendable: Appendable, configure: ConfigScope.() -> Unit = defaultConfig) {
     val config = ConfigBuilder().apply(configure).build()
     appendable.appendLine("@startuml")
     appendable.appendLine("!includeurl https://raw.githubusercontent.com/plantuml-stdlib/EIP-PlantUML/main/dist/EIP-PlantUML.puml")
@@ -122,7 +122,27 @@ private fun IntegrationNode.plantUmlDeclaration(config: Config): String = buildS
     append(", \"")
     append(config.labelGenerator(this@plantUmlDeclaration))
     append("\")")
+
+    if (!config.hideStereotypes) {
+        val stereotype = config.stereotypeGenerator(this@plantUmlDeclaration)
+        if (!stereotype.isNullOrBlank()) {
+            append(" <")
+            append(stereotype)
+            append(">")
+        }
+    }
 }
 
 private fun LinkNode.plantUmlDeclaration() =
     "Send(node_$from, node_$to)"
+
+val defaultConfig: ConfigScope.() -> Unit = {
+    hideStereotypes()
+    label { name }
+    stereotype {
+        when (integrationPatternType) {
+            pollable_channel -> "<\$polling_consumer>"
+            else -> null
+        }
+    }
+}
