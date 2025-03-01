@@ -1,7 +1,9 @@
 package ru.pchurzin.spring.integraion.plantuml.graph
 
 import org.junit.jupiter.api.Test
+import org.springframework.integration.IntegrationPatternType.pollable_channel
 import org.springframework.integration.channel.DirectChannel
+import org.springframework.integration.channel.QueueChannel
 import org.springframework.integration.graph.Graph
 import org.springframework.integration.graph.LinkNode
 import org.springframework.integration.graph.MessageChannelNode
@@ -98,5 +100,28 @@ class PlantUmlTest {
         }
 
         assert(!appendable.toString().contains("HIDE_STEREOTYPES()"))
+    }
+
+    @Test
+    fun `Should generate plantuml markup with custom stereotypes`() {
+        val nodes = buildSet {
+            add(MessageSourceNode(1, "source", ResourceRetrievingMessageSource("*"), null, null))
+            add(MessageChannelNode(2, "channel", QueueChannel()))
+        }
+        val links = buildSet {
+            add(LinkNode(1, 2, LinkNode.Type.input))
+        }
+        val graph = Graph(emptyMap(), nodes, links)
+        val appendable = StringBuilder()
+        graph.writePlantUml(appendable) {
+            showStereotypes()
+            stereotype {
+                when(integrationPatternType) {
+                    pollable_channel -> "<\$polling_consumer>"
+                    else -> null
+                }
+            }
+        }
+        assert(appendable.toString().contains("<<\$polling_consumer>>"))
     }
 }

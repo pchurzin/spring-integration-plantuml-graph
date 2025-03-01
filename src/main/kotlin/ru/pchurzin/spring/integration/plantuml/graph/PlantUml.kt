@@ -41,6 +41,7 @@ annotation class ConfigDsl
 @ConfigDsl
 interface ConfigScope {
     fun label(labelGenerator: IntegrationNode.() -> String)
+    fun stereotype(stereotypeGenerator: IntegrationNode.() -> String?)
     fun hideStereotypes()
     fun showStereotypes()
 }
@@ -50,6 +51,12 @@ private class ConfigBuilder : ConfigScope {
 
     override fun label(labelGenerator: (IntegrationNode) -> String) {
         this.labelGenerator = labelGenerator
+    }
+
+    private var stereotypeGenerator: (IntegrationNode) -> String? = { null }
+
+    override fun stereotype(stereotypeGenerator: (IntegrationNode) -> String?) {
+        this.stereotypeGenerator = stereotypeGenerator
     }
 
     private var hideStereotypes: Boolean = true
@@ -64,12 +71,14 @@ private class ConfigBuilder : ConfigScope {
 
     fun build(): Config = Config(
         labelGenerator,
+        stereotypeGenerator,
         hideStereotypes
     )
 }
 
 private data class Config(
     val labelGenerator: (IntegrationNode) -> String,
+    val stereotypeGenerator: (IntegrationNode) -> String?,
     val hideStereotypes: Boolean,
 )
 
