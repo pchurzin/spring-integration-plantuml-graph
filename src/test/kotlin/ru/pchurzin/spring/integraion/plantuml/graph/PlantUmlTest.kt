@@ -77,4 +77,26 @@ class PlantUmlTest {
         """.trimIndent()
         )
     }
+
+    @Test
+    fun `Should hide stereotypes`() {
+        val graph = Graph(emptyMap(), emptySet(), emptySet())
+        val appendable = StringBuilder()
+        graph.writePlantUml(appendable) {
+            hideStereotypes()
+        }
+
+        assert(appendable.toString().contains("HIDE_STEREOTYPES()"))
+    }
+
+    @Test
+    fun `Should not hide stereotypes`() {
+        val graph = Graph(emptyMap(), emptySet(), emptySet())
+        val appendable = StringBuilder()
+        graph.writePlantUml(appendable) {
+            showStereotypes()
+        }
+
+        assert(!appendable.toString().contains("HIDE_STEREOTYPES()"))
+    }
 }

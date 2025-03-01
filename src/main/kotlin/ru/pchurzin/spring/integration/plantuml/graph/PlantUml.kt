@@ -15,7 +15,11 @@ private fun writePlantUml(graph: Graph, appendable: Appendable, configure: Confi
     val config = ConfigBuilder().apply(configure).build()
     appendable.appendLine("@startuml")
     appendable.appendLine("!includeurl https://raw.githubusercontent.com/plantuml-stdlib/EIP-PlantUML/main/dist/EIP-PlantUML.puml")
-    appendable.appendLine("HIDE_STEREOTYPES()")
+
+    if (config.hideStereotypes) {
+        appendable.appendLine("HIDE_STEREOTYPES()")
+    }
+
     appendable.appendLine()
 
     graph.nodes.forEach { node ->
@@ -37,6 +41,8 @@ annotation class ConfigDsl
 @ConfigDsl
 interface ConfigScope {
     fun label(labelGenerator: IntegrationNode.() -> String)
+    fun hideStereotypes()
+    fun showStereotypes()
 }
 
 private class ConfigBuilder : ConfigScope {
@@ -46,11 +52,25 @@ private class ConfigBuilder : ConfigScope {
         this.labelGenerator = labelGenerator
     }
 
-    fun build(): Config = Config(labelGenerator)
+    private var hideStereotypes: Boolean = true
+
+    override fun hideStereotypes() {
+        hideStereotypes = true
+    }
+
+    override fun showStereotypes() {
+        hideStereotypes = false
+    }
+
+    fun build(): Config = Config(
+        labelGenerator,
+        hideStereotypes
+    )
 }
 
 private data class Config(
     val labelGenerator: (IntegrationNode) -> String,
+    val hideStereotypes: Boolean,
 )
 
 private val IntegrationPatternType.plantUmlName
