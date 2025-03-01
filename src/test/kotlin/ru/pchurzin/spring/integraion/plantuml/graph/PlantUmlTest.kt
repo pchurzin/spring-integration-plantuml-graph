@@ -124,4 +124,27 @@ class PlantUmlTest {
         }
         assert(appendable.toString().contains("<<\$polling_consumer>>"))
     }
+
+    @Test
+    fun `Should generate plantuml markup with custom colors`() {
+        val nodes = buildSet {
+            add(MessageSourceNode(1, "source", ResourceRetrievingMessageSource("*"), null, null))
+            add(MessageChannelNode(2, "channel", QueueChannel()))
+        }
+        val links = buildSet {
+            add(LinkNode(1, 2, LinkNode.Type.input))
+        }
+        val graph = Graph(emptyMap(), nodes, links)
+        val appendable = StringBuilder()
+        graph.writePlantUml(appendable) {
+            color {
+                when (integrationPatternType) {
+                    pollable_channel -> "red"
+                    else -> null
+                }
+            }
+        }
+        assert(appendable.toString().contains("#red"))
+        println(appendable.toString())
+    }
 }

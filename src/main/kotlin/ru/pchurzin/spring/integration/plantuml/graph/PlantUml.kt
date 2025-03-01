@@ -44,6 +44,7 @@ interface ConfigScope {
     fun stereotype(stereotypeGenerator: IntegrationNode.() -> String?)
     fun hideStereotypes()
     fun showStereotypes()
+    fun color(colorGenerator: IntegrationNode.() -> String?)
 }
 
 private class ConfigBuilder : ConfigScope {
@@ -69,10 +70,17 @@ private class ConfigBuilder : ConfigScope {
         hideStereotypes = false
     }
 
+    private var colorGenerator: (IntegrationNode) -> String? = { null }
+
+    override fun color(colorGenerator: (IntegrationNode) -> String?) {
+        this.colorGenerator = colorGenerator
+    }
+
     fun build(): Config = Config(
         labelGenerator,
         stereotypeGenerator,
-        hideStereotypes
+        hideStereotypes,
+        colorGenerator,
     )
 }
 
@@ -80,6 +88,7 @@ private data class Config(
     val labelGenerator: (IntegrationNode) -> String,
     val stereotypeGenerator: (IntegrationNode) -> String?,
     val hideStereotypes: Boolean,
+    val colorGenerator: (IntegrationNode) -> String?,
 )
 
 private val IntegrationPatternType.plantUmlName
@@ -130,6 +139,12 @@ private fun IntegrationNode.plantUmlDeclaration(config: Config): String = buildS
             append(stereotype)
             append(">")
         }
+    }
+
+    val color = config.colorGenerator(this@plantUmlDeclaration)
+    if (!color.isNullOrBlank()) {
+        append(" #")
+        append(color)
     }
 }
 
