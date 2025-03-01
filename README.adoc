@@ -92,3 +92,32 @@ fun printPlantUml(graphServer: IntegrationGraphServer) {
     graphServer.graph.writePlantUml(System.out)
 }
 ----
+
+=== Configuring
+
+There are some configuration options one can use. They are configured via DSL.
+For example, if you need to show stereotypes (by default stereotypes are hidden)
+
+[source, kotlin]
+----
+fun printPlantUml(graphServer: IntegrationGraphServer) {
+    graphServer.graph.writePlantUml(System.out) {
+        showStereotypes()
+    }
+}
+----
+
+Another one useful option is to provide a `labelGenerator` in order to customize component labels
+For example, the next code shortens labels to include only the last part of the node name
+(Spring can assign a long dotted names)
+
+[source, kotlin]
+----
+fun printPlantUml(graphServer: IntegrationGraphServer) {
+    graphServer.graph.writePlantUml(System.out) {
+        label {
+            name.substringAfterLast('.')
+        }
+    }
+}
+----
