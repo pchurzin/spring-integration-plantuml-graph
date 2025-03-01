@@ -1,0 +1,94 @@
+= Spring Integration Graph PlantUML generator
+
+A tiny library that generates PlantUML code for a Spring Integration graph.
+
+It uses the https://github.com/plantuml-stdlib/EIP-PlantUML[EIP-PlantUML] library to create the markup.
+
+== Demo
+
+I've created a https://github.com//pchurzin/spring-integration-samples/tree/plantuml/applications/loan-broker[demo] (see the `plantuml` branch) using the https://github.com/spring-projects/spring-integration-samples[Spring Integration Samples]
+repository for the `loan-broker` example.
+Here is the generated code.
+
+.Result plantuml code
+[source,plantuml]
+----
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/EIP-PlantUML/main/dist/EIP-PlantUML.puml
+HIDE_STEREOTYPES()
+
+MsgChannel(node_1, "nullChannel")
+PubSubChannel(node_2, "errorChannel")
+MsgChannel(node_3, "exclusiveBankChannel")
+MsgChannel(node_4, "premiereBankChannel")
+MsgChannel(node_5, "qualityBankChannel")
+MsgChannel(node_6, "friendlyBankChannel")
+MsgChannel(node_7, "easyBankChannel")
+MsgChannel(node_8, "loanRequestsChannel")
+MsgChannel(node_9, "loanQuotesChannel")
+MessagingGateway(node_10, "loanBrokerGateway.getBestLoanQuote(org.springframework.integration.samples.loanbroker.domain.LoanRequest)")
+MessagingGateway(node_11, "loanBrokerGateway.getAllLoanQuotes(org.springframework.integration.samples.loanbroker.domain.LoanRequest)")
+ServiceActivator(node_12, "org.springframework.integration.config.ServiceActivatorFactoryBean#0")
+ServiceActivator(node_13, "org.springframework.integration.config.ServiceActivatorFactoryBean#1")
+ServiceActivator(node_14, "org.springframework.integration.config.ServiceActivatorFactoryBean#2")
+ServiceActivator(node_15, "org.springframework.integration.config.ServiceActivatorFactoryBean#3")
+ServiceActivator(node_16, "org.springframework.integration.config.ServiceActivatorFactoryBean#4")
+MessageRouter(node_17, "org.springframework.integration.handler.MessageHandlerChain#0")
+Aggregator(node_18, "org.springframework.integration.config.AggregatorFactoryBean#0")
+ChannelAdapterLeft(node_19, "errorLogger")
+
+Send(node_10, node_8)
+Send(node_11, node_8)
+Send(node_3, node_12)
+Send(node_12, node_9)
+Send(node_4, node_13)
+Send(node_13, node_9)
+Send(node_5, node_14)
+Send(node_14, node_9)
+Send(node_6, node_15)
+Send(node_15, node_9)
+Send(node_7, node_16)
+Send(node_16, node_9)
+Send(node_8, node_17)
+Send(node_9, node_18)
+Send(node_18, node_1)
+Send(node_2, node_19)
+@enduml
+----
+
+This markup results in the following image using the https://plantuml.com[plantuml.com online server]
+
+.Resulting diagram image
+[link=https://www.plantuml.com/plantuml/svg/hPHFSzem4CNlV8eqlS1C8mTi_j1J8ALDPiYKGdheAIFiHMYG9MSbGVdsjOiCTiOEEN3ayTlttiWhtMb3qTXOD3vn6GeRWKLnjJOcqLyz3-cEC6xMTcarOAYa0Mb8g68l4LHcOpVQH88llSdZx6QMQR-VfbvCkVGYhar99aaMy_3uRVAoU9xC9p-V_ymcYsQhqNZIx7vDfGJHb2g2b_QNgsjfXN3YTQiniyk5NPQWJWe1ei8JzTR7pv2_eR2QRs5CvQOU3L8qGOWvu1cocvAlbWfkzk-3lHHS8GSPYJDaF-j9zHbga592KJc7LmlQw7fowCXVLXaeSg0rPLoo7zJ0ZkxTQTywV8ng0-Z-8mpCE8sPvZvDXOpe1DFn5T8OTWetX4i33AdXIX9DuqI09fdLyhyLYLIs2cHwQjsghz6kgp4IujX2Nwx60d3BGnY5Xc-fKUXgP7jrBYDKSiKPUUlmdOP6uNuCL7w-hK_mBvFGhay8BfFGgK_eNYR1hq_eNIOXE2uSp9KraDltFs2_fZ8IWCJDFnn-tgyfFtpV4MC8hD1vyF7ERhPYQznz7KKqCO1JM1ddFinVlAbY33156mkGqUaM7vw9Lb5jLwc-4zkT4jjnyh2e1ZdhbrY_YktcR51YWogsbxFT4jkjOlivsoknlIfsaBFzeZhCrVBf7E6Ysid5rFSkLMqi_W40]
+image::https://www.plantuml.com/plantuml/svg/hPHFSzem4CNlV8eqlS1C8mTi_j1J8ALDPiYKGdheAIFiHMYG9MSbGVdsjOiCTiOEEN3ayTlttiWhtMb3qTXOD3vn6GeRWKLnjJOcqLyz3-cEC6xMTcarOAYa0Mb8g68l4LHcOpVQH88llSdZx6QMQR-VfbvCkVGYhar99aaMy_3uRVAoU9xC9p-V_ymcYsQhqNZIx7vDfGJHb2g2b_QNgsjfXN3YTQiniyk5NPQWJWe1ei8JzTR7pv2_eR2QRs5CvQOU3L8qGOWvu1cocvAlbWfkzk-3lHHS8GSPYJDaF-j9zHbga592KJc7LmlQw7fowCXVLXaeSg0rPLoo7zJ0ZkxTQTywV8ng0-Z-8mpCE8sPvZvDXOpe1DFn5T8OTWetX4i33AdXIX9DuqI09fdLyhyLYLIs2cHwQjsghz6kgp4IujX2Nwx60d3BGnY5Xc-fKUXgP7jrBYDKSiKPUUlmdOP6uNuCL7w-hK_mBvFGhay8BfFGgK_eNYR1hq_eNIOXE2uSp9KraDltFs2_fZ8IWCJDFnn-tgyfFtpV4MC8hD1vyF7ERhPYQznz7KKqCO1JM1ddFinVlAbY33156mkGqUaM7vw9Lb5jLwc-4zkT4jjnyh2e1ZdhbrY_YktcR51YWogsbxFT4jkjOlivsoknlIfsaBFzeZhCrVBf7E6Ysid5rFSkLMqi_W40[format=svg]
+
+== Get the library
+
+****
+The library needs the `org.springframework.integration:spring-integration-core` module to be on the classpath
+****
+
+.Gradle
+[source, kotlin]
+----
+implementation("ru.pchurzin:spring-integration-graph:0.1.0")
+----
+
+.Maven
+[source, xml]
+----
+<dependency>
+    <groupId>ru.pchurzin</groupId>
+    <artifactId>spring-integration-plantuml-graph</artifactId>
+    <version>0.1.0</version>
+</dependency>
+----
+
+== Usage
+
+[source, kotlin]
+----
+fun printPlantUml(graphServer: IntegrationGraphServer) {
+    graphServer.graph.writePlantUml(System.out)
+}
+----
