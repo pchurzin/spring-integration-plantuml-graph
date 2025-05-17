@@ -71,7 +71,7 @@ The library needs the `org.springframework.integration:spring-integration-core` 
 .Gradle
 [source, kotlin]
 ----
-implementation("ru.pchurzin:spring-integration-graph:0.1.0")
+implementation("ru.pchurzin:spring-integration-graph:0.3.0")
 ----
 
 .Maven
@@ -80,7 +80,7 @@ implementation("ru.pchurzin:spring-integration-graph:0.1.0")
 <dependency>
     <groupId>ru.pchurzin</groupId>
     <artifactId>spring-integration-plantuml-graph</artifactId>
-    <version>0.2.0</version>
+    <version>0.3.0</version>
 </dependency>
 ----
 
@@ -96,7 +96,26 @@ fun printPlantUml(graphServer: IntegrationGraphServer) {
 === Configuring
 
 There are some configuration options one can use. They are configured via DSL.
-For example, if you need to show stereotypes (by default stereotypes are hidden)
+
+For example, in order to generate a subgraph, you can specify predicates to select
+nodes to start from. The generated graph will contain only nodes reachable from the
+nodes, which conforms to any of the provided predicates.
+
+[source, kotlin]
+----
+fun printPlantUml(graphServer: IntegrationGraphServer) {
+    graphServer.graph.writePlantUml(System.out) {
+        startWith {
+            name.endsWith("somePostfix")
+        }
+        startWith {
+            name == "some name"
+        }
+    }
+}
+----
+
+If you need to show stereotypes (by default stereotypes are hidden)
 
 [source, kotlin]
 ----
@@ -109,7 +128,7 @@ fun printPlantUml(graphServer: IntegrationGraphServer) {
 
 Another one useful option is to provide a `labelGenerator` in order to customize component labels
 For example, the next code shortens labels to include only the last part of the node name
-(Spring can assign a long dotted names)
+(Spring can assign long dotted names)
 
 [source, kotlin]
 ----

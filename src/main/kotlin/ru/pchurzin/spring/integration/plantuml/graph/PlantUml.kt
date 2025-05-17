@@ -5,6 +5,7 @@ import org.springframework.integration.IntegrationPatternType.*
 import org.springframework.integration.graph.Graph
 import org.springframework.integration.graph.IntegrationNode
 import org.springframework.integration.graph.LinkNode
+import java.util.*
 
 fun Graph.writePlantUml(appendable: Appendable, configure: ConfigScope.() -> Unit = defaultConfig) {
     writePlantUml(this, appendable, configure)
@@ -22,17 +23,43 @@ private fun writePlantUml(graph: Graph, appendable: Appendable, configure: Confi
 
     appendable.appendLine()
 
-    graph.nodes.forEach { node ->
+    val nodes = visibleNodes(graph, config)
+    nodes.forEach { node ->
         appendable.appendLine(node.plantUmlDeclaration(config))
     }
 
     appendable.appendLine()
 
-    graph.links.forEach { link ->
+    val links = visibleLinks(graph, nodes)
+    links.forEach { link ->
         appendable.appendLine(link.plantUmlDeclaration())
     }
 
     appendable.appendLine("@enduml")
+}
+
+private fun visibleNodes(graph: Graph, config: Config): Collection<IntegrationNode> {
+    if (config.startNodeSelectors.isEmpty()) return graph.nodes
+    val nodeIdToNode = graph.nodes.associateBy(IntegrationNode::getNodeId)
+    val result = hashSetOf<IntegrationNode>()
+    val startNodes = graph.nodes.filter { it.satisfiesAny(config.startNodeSelectors) }
+    val queue: Queue<IntegrationNode> = LinkedList(startNodes)
+    while (queue.isNotEmpty()) {
+        val node = queue.remove()
+        result.add(node)
+        graph.links
+            .filter { it.from == node.nodeId }
+            .forEach { link -> queue.add(nodeIdToNode[link.to]) }
+    }
+    return result
+}
+
+private fun IntegrationNode.satisfiesAny(selectors: Collection<(IntegrationNode) -> Boolean>): Boolean =
+    selectors.any { it(this) }
+
+private fun visibleLinks(graph: Graph, visibleNodes: Collection<IntegrationNode>): Collection<LinkNode> {
+    val visibleNodeIds = visibleNodes.map(IntegrationNode::getNodeId).toSet()
+    return graph.links.filter { it.from in visibleNodeIds && it.to in visibleNodeIds }.toSet()
 }
 
 @DslMarker
@@ -45,6 +72,7 @@ interface ConfigScope {
     fun hideStereotypes()
     fun showStereotypes()
     fun color(colorGenerator: IntegrationNode.() -> String?)
+    fun startWith(nodeSelector: (IntegrationNode) -> Boolean)
 }
 
 private class ConfigBuilder : ConfigScope {
@@ -76,11 +104,18 @@ private class ConfigBuilder : ConfigScope {
         this.colorGenerator = colorGenerator
     }
 
+    private var startNodeSelectors: MutableSet<(IntegrationNode) -> Boolean> = mutableSetOf()
+
+    override fun startWith(nodeSelector: (IntegrationNode) -> Boolean) {
+        startNodeSelectors.add(nodeSelector)
+    }
+
     fun build(): Config = Config(
         labelGenerator,
         stereotypeGenerator,
         hideStereotypes,
         colorGenerator,
+        startNodeSelectors,
     )
 }
 
@@ -89,6 +124,7 @@ private data class Config(
     val stereotypeGenerator: (IntegrationNode) -> String?,
     val hideStereotypes: Boolean,
     val colorGenerator: (IntegrationNode) -> String?,
+    val startNodeSelectors: Set<(IntegrationNode) -> Boolean>,
 )
 
 private val IntegrationPatternType.plantUmlName
