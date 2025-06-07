@@ -72,7 +72,7 @@ interface ConfigScope {
     fun hideStereotypes()
     fun showStereotypes()
     fun color(colorGenerator: IntegrationNode.() -> String?)
-    fun startWith(nodeSelector: (IntegrationNode) -> Boolean)
+    fun startWith(nodeSelector: IntegrationNode.() -> Boolean)
 }
 
 private class ConfigBuilder : ConfigScope {

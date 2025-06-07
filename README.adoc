@@ -1,4 +1,4 @@
-= Spring Integration Graph PlantUML generator
+== Spring Integration Graph PlantUML generator
 
 A tiny library that generates PlantUML code for a Spring Integration graph.
 
@@ -71,7 +71,7 @@ The library needs the `org.springframework.integration:spring-integration-core` 
 .Gradle
 [source, kotlin]
 ----
-implementation("ru.pchurzin:spring-integration-graph:0.3.0")
+implementation("ru.pchurzin:spring-integration-graph:0.3.1")
 ----
 
 .Maven
@@ -80,7 +80,7 @@ implementation("ru.pchurzin:spring-integration-graph:0.3.0")
 <dependency>
     <groupId>ru.pchurzin</groupId>
     <artifactId>spring-integration-plantuml-graph</artifactId>
-    <version>0.3.0</version>
+    <version>0.3.1</version>
 </dependency>
 ----
 
