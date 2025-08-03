@@ -14,6 +14,7 @@ fun Graph.writePlantUml(appendable: Appendable, configure: ConfigScope.() -> Uni
 @JvmName("writePlantUmlStatic")
 private fun writePlantUml(graph: Graph, appendable: Appendable, configure: ConfigScope.() -> Unit = defaultConfig) {
     val config = ConfigBuilder().apply(configure).build()
+    val graphWithoutImplicitChannels = if (config.showImplicitChannels) graph else graph.withoutImplicitChannels()
     appendable.appendLine("@startuml")
     appendable.appendLine("!includeurl https://raw.githubusercontent.com/plantuml-stdlib/EIP-PlantUML/main/dist/EIP-PlantUML.puml")
 
@@ -23,20 +24,41 @@ private fun writePlantUml(graph: Graph, appendable: Appendable, configure: Confi
 
     appendable.appendLine()
 
-    val nodes = visibleNodes(graph, config)
+    val nodes = visibleNodes(graphWithoutImplicitChannels, config)
     nodes.forEach { node ->
         appendable.appendLine(node.plantUmlDeclaration(config))
     }
 
     appendable.appendLine()
 
-    val links = visibleLinks(graph, nodes)
+    val links = visibleLinks(graphWithoutImplicitChannels, nodes)
     links.forEach { link ->
         appendable.appendLine(link.plantUmlDeclaration())
     }
 
     appendable.appendLine("@enduml")
 }
+
+private fun Graph.withoutImplicitChannels(): Graph {
+    val implicitChannelNodeIds =
+        nodes.filter { it.name.matches(internalChannelNameRegex) }.map(IntegrationNode::getNodeId)
+    val fromNodeIdToLinkNodes = links.associateBy(LinkNode::getFrom)
+    val toNodeIdToLinkNodes = links.associateBy(LinkNode::getTo)
+    val newLinks = implicitChannelNodeIds.mapNotNull { nodeId ->
+        val fromNodeId = toNodeIdToLinkNodes[nodeId]?.from
+        val toNodeId = fromNodeIdToLinkNodes[nodeId]?.to
+        if (fromNodeId == null || toNodeId == null) {
+            null
+        } else {
+            LinkNode(fromNodeId, toNodeId, LinkNode.Type.route)
+        }
+    }
+    val filteredNodes = nodes.filter { it.nodeId !in implicitChannelNodeIds }
+    val filteredLinks = links.filter { it.from !in implicitChannelNodeIds && it.to !in implicitChannelNodeIds }
+    return Graph(contentDescriptor, filteredNodes, filteredLinks + newLinks)
+}
+
+private val internalChannelNameRegex = Regex(".+channel#\\d+$")
 
 private fun visibleNodes(graph: Graph, config: Config): Collection<IntegrationNode> {
     if (config.startNodeSelectors.isEmpty()) return graph.nodes
@@ -73,6 +95,7 @@ interface ConfigScope {
     fun showStereotypes()
     fun color(colorGenerator: IntegrationNode.() -> String?)
     fun startWith(nodeSelector: IntegrationNode.() -> Boolean)
+    fun showImplicitChannels(show: Boolean = false)
 }
 
 private class ConfigBuilder : ConfigScope {
@@ -110,12 +133,19 @@ private class ConfigBuilder : ConfigScope {
         startNodeSelectors.add(nodeSelector)
     }
 
+    private var showImplicitChannels: Boolean = false
+
+    override fun showImplicitChannels(show: Boolean) {
+        showImplicitChannels = show
+    }
+
     fun build(): Config = Config(
         labelGenerator,
         stereotypeGenerator,
         hideStereotypes,
         colorGenerator,
         startNodeSelectors,
+        showImplicitChannels,
     )
 }
 
@@ -125,6 +155,7 @@ private data class Config(
     val hideStereotypes: Boolean,
     val colorGenerator: (IntegrationNode) -> String?,
     val startNodeSelectors: Set<(IntegrationNode) -> Boolean>,
+    val showImplicitChannels: Boolean,
 )
 
 private val IntegrationPatternType.plantUmlName

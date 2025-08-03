@@ -101,6 +101,28 @@ class PlantUmlTest {
         assert(appendable hasContentOfResource "custom-colors.puml")
     }
 
+    @Test
+    fun `Should generate plantuml markup with no implicit channels`() {
+        val appendable = StringBuilder()
+
+        graphServer.graph.writePlantUml(appendable) {
+            showImplicitChannels(false)
+        }
+
+        assert(appendable hasContentOfResource "hide-implicit-channels.puml")
+    }
+
+    @Test
+    fun `Should generate plantuml markup with implicit channels`() {
+        val appendable = StringBuilder()
+
+        graphServer.graph.writePlantUml(appendable) {
+            showImplicitChannels(true)
+        }
+
+        assert(appendable hasContentOfResource "show-implicit-channels.puml")
+    }
+
     @Configuration
     @EnableIntegration
     open class Config {
