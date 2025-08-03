@@ -1,142 +1,95 @@
 package ru.pchurzin.spring.integraion.plantuml.graph
 
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import org.springframework.core.io.ClassPathResource
 import org.springframework.integration.IntegrationPatternType.pollable_channel
-import org.springframework.integration.channel.DirectChannel
 import org.springframework.integration.channel.QueueChannel
-import org.springframework.integration.graph.Graph
-import org.springframework.integration.graph.LinkNode
-import org.springframework.integration.graph.MessageChannelNode
-import org.springframework.integration.graph.MessageSourceNode
-import org.springframework.integration.resource.ResourceRetrievingMessageSource
+import org.springframework.integration.config.EnableIntegration
+import org.springframework.integration.dsl.IntegrationFlow
+import org.springframework.integration.dsl.PollerSpec
+import org.springframework.integration.dsl.Pollers
+import org.springframework.integration.dsl.integrationFlow
+import org.springframework.integration.graph.IntegrationGraphServer
+import org.springframework.messaging.MessageChannel
+import org.springframework.test.context.junit.jupiter.SpringExtension
 import ru.pchurzin.spring.integration.plantuml.graph.writePlantUml
 
+@ExtendWith(SpringExtension::class)
 class PlantUmlTest {
 
-    @Test
-    fun `Should generate plantuml markup`() {
-        val nodes = buildSet {
-            add(MessageSourceNode(1, "source", ResourceRetrievingMessageSource("*"), null, null))
-            add(MessageChannelNode(2, "channel", DirectChannel()))
-        }
-        val links = buildSet {
-            add(LinkNode(1, 2, LinkNode.Type.input))
-        }
-        val graph = Graph(emptyMap(), nodes, links)
-
-        val appendable = StringBuilder()
-        graph.writePlantUml(appendable)
-
-        assert(
-            appendable.toString() == """
-            @startuml
-            !includeurl https://raw.githubusercontent.com/plantuml-stdlib/EIP-PlantUML/main/dist/EIP-PlantUML.puml
-            HIDE_STEREOTYPES()
-
-            ChannelAdapterRight(node_1, "source")
-            MsgChannel(node_2, "channel")
-
-            Send(node_1, node_2)
-            @enduml
-
-        """.trimIndent()
-        )
-    }
+    @Autowired
+    private lateinit var graphServer: IntegrationGraphServer
 
     @Test
-    fun `Should generate plantuml markup with custom labels`() {
-        val nodes = buildSet {
-            add(MessageSourceNode(1, "org.example.source", ResourceRetrievingMessageSource("*"), null, null))
-            add(MessageChannelNode(2, "channel", DirectChannel()))
-            add(MessageChannelNode(3, "channel2", DirectChannel()))
-        }
-        val links = buildSet {
-            add(LinkNode(1, 2, LinkNode.Type.input))
-            add(LinkNode(1, 3, LinkNode.Type.input))
-        }
-        val graph = Graph(emptyMap(), nodes, links)
-
+    fun `Should generate plantuml markup with default configuration`() {
         val appendable = StringBuilder()
-        graph.writePlantUml(appendable) {
-            label {
-                name.substringAfterLast(".")
-            }
-        }
-        assert(
-            appendable.toString() == """
-                @startuml
-                !includeurl https://raw.githubusercontent.com/plantuml-stdlib/EIP-PlantUML/main/dist/EIP-PlantUML.puml
-                HIDE_STEREOTYPES()
 
-                ChannelAdapterRight(node_1, "source")
-                MsgChannel(node_2, "channel")
-                MsgChannel(node_3, "channel2")
+        graphServer.graph.writePlantUml(appendable)
 
-                Send(node_1, node_2)
-                Send(node_1, node_3)
-                @enduml
-
-        """.trimIndent()
-        )
+        assert(appendable hasContentOfResource "default.puml")
     }
 
     @Test
     fun `Should hide stereotypes`() {
-        val graph = Graph(emptyMap(), emptySet(), emptySet())
+
         val appendable = StringBuilder()
-        graph.writePlantUml(appendable) {
+        graphServer.graph.writePlantUml(appendable) {
             hideStereotypes()
         }
 
-        assert(appendable.toString().contains("HIDE_STEREOTYPES()"))
+        assert(appendable hasContentOfResource "hide-stereotypes.puml")
     }
 
     @Test
-    fun `Should not hide stereotypes`() {
-        val graph = Graph(emptyMap(), emptySet(), emptySet())
+    fun `Should show stereotypes`() {
         val appendable = StringBuilder()
-        graph.writePlantUml(appendable) {
+
+        graphServer.graph.writePlantUml(appendable) {
             showStereotypes()
         }
 
-        assert(!appendable.toString().contains("HIDE_STEREOTYPES()"))
+        assert(appendable hasContentOfResource "show-stereotypes.puml")
+    }
+
+    @Test
+    fun `Should generate plantuml markup with custom labels`() {
+        val appendable = StringBuilder()
+
+        graphServer.graph.writePlantUml(appendable) {
+            label {
+                name.substringAfterLast(".")
+            }
+        }
+
+        assert(appendable hasContentOfResource "custom-labels.puml")
     }
 
     @Test
     fun `Should generate plantuml markup with custom stereotypes`() {
-        val nodes = buildSet {
-            add(MessageSourceNode(1, "source", ResourceRetrievingMessageSource("*"), null, null))
-            add(MessageChannelNode(2, "channel", QueueChannel()))
-        }
-        val links = buildSet {
-            add(LinkNode(1, 2, LinkNode.Type.input))
-        }
-        val graph = Graph(emptyMap(), nodes, links)
         val appendable = StringBuilder()
-        graph.writePlantUml(appendable) {
+
+        graphServer.graph.writePlantUml(appendable) {
             showStereotypes()
             stereotype {
-                when(integrationPatternType) {
+                when (integrationPatternType) {
                     pollable_channel -> "<\$polling_consumer>"
                     else -> null
                 }
             }
         }
-        assert(appendable.toString().contains("<<\$polling_consumer>>"))
+
+        assert(appendable hasContentOfResource "custom-stereotypes.puml")
     }
 
     @Test
     fun `Should generate plantuml markup with custom colors`() {
-        val nodes = buildSet {
-            add(MessageSourceNode(1, "source", ResourceRetrievingMessageSource("*"), null, null))
-            add(MessageChannelNode(2, "channel", QueueChannel()))
-        }
-        val links = buildSet {
-            add(LinkNode(1, 2, LinkNode.Type.input))
-        }
-        val graph = Graph(emptyMap(), nodes, links)
         val appendable = StringBuilder()
-        graph.writePlantUml(appendable) {
+
+        graphServer.graph.writePlantUml(appendable) {
             color {
                 when (integrationPatternType) {
                     pollable_channel -> "red"
@@ -144,7 +97,39 @@ class PlantUmlTest {
                 }
             }
         }
-        assert(appendable.toString().contains("#red"))
-        println(appendable.toString())
+
+        assert(appendable hasContentOfResource "custom-colors.puml")
+    }
+
+    @Configuration
+    @EnableIntegration
+    open class Config {
+
+        @Bean
+        open fun integrationGraphServer() = IntegrationGraphServer()
+
+        @Bean
+        open fun startChannel(): MessageChannel = QueueChannel()
+
+        @Bean
+        open fun testPoller(): PollerSpec = Pollers.fixedRate(1000)
+
+        @Bean
+        open fun testFlow(): IntegrationFlow = integrationFlow(startChannel()) {
+            transformWith {
+                poller(testPoller())
+                transformer<String> { it.uppercase() }
+            }
+            filter<String>({ it.startsWith("A") }) {
+                discardChannel("errorChannel")
+            }
+            transformWith {
+                transformer<String> { it.lowercase() }
+            }
+            channel("nullChannel")
+        }
     }
 }
+
+private infix fun Appendable.hasContentOfResource(resourceName: String) =
+    ClassPathResource(resourceName).getContentAsString(Charsets.UTF_8) == toString()

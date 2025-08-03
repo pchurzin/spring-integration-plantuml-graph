@@ -3,10 +3,12 @@
 
 [versions]
 kotlin = "1.9.22"
+spring = "6.1.0"
 spring-integration = "6.2.0"
 
 [libraries]
 spring-integration-core = { module = "org.springframework.integration:spring-integration-core", version.ref = "spring-integration" }
+spring-test = { module = "org.springframework:spring-test", version.ref = "spring" }
 
 [plugins]
-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin"}
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

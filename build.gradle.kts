@@ -26,12 +26,13 @@ dependencies {
 
     testImplementation(kotlin("test"))
     testImplementation(libs.spring.integration.core)
+    testImplementation(libs.spring.test)
 }
 
 testing {
     suites {
         named<JvmTestSuite>("test") {
-            useJUnitJupiter()
+            useJUnitJupiter("5.13.4")
         }
     }
 }
