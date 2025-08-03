@@ -71,7 +71,7 @@ The library needs the `org.springframework.integration:spring-integration-core` 
 .Gradle
 [source, kotlin]
 ----
-implementation("ru.pchurzin:spring-integration-graph:0.3.1")
+implementation("ru.pchurzin:spring-integration-graph:0.4.0")
 ----
 
 .Maven
@@ -80,7 +80,7 @@ implementation("ru.pchurzin:spring-integration-graph:0.3.1")
 <dependency>
     <groupId>ru.pchurzin</groupId>
     <artifactId>spring-integration-plantuml-graph</artifactId>
-    <version>0.3.1</version>
+    <version>0.4.0</version>
 </dependency>
 ----
 
@@ -170,6 +170,18 @@ fun printPlantUml(graphServer: IntegrationGraphServer) {
                 else -> null
             }
         }
+    }
+}
+----
+
+Hide implicit message channels. Spring Integration creates implicit channels between endpoints.
+These channels do not help to understand flow, so it was decided to hide them by default.
+
+[source, kotlin]
+----
+fun printPlantUml(graphServer: IntegrationGraphServer) {
+    graphServer.graph.writePlantUml(System.out) {
+        showImplicitChannels(true)
     }
 }
 ----
